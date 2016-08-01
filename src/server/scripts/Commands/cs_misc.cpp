@@ -100,7 +100,8 @@ public:
             { "wchange",          rbac::RBAC_PERM_COMMAND_WCHANGE,          false, &HandleChangeWeather,           "" },
             { "mailbox",          rbac::RBAC_PERM_COMMAND_MAILBOX,          false, &HandleMailBoxCommand,          "" },
             { "auras  ",          rbac::RBAC_PERM_COMMAND_LIST_AURAS,       false, &HandleAurasCommand,            "" },
-			{ "move", rbac::RBAC_PERM_COMMAND_AURA, false, &HandleMoveCommand, "" },
+			{ "move",			  rbac::RBAC_PERM_COMMAND_AURA,				false, &HandleMoveCommand,			   "" },
+			{ "transmog",		  rbac::RBAC_PERM_COMMAND_AURA,				false, &HandleTransmogCommand,		   "" },
         };
         return commandTable;
     }
@@ -2782,6 +2783,34 @@ public:
 		WorldLocation position = WorldLocation(player->GetMapId(), x, y, z, rot);
 		player->TeleportTo(position);
 		handler->PSendSysMessage("Position : x = %5.3f ; y = %5.3f ; z = %5.3f", x, y, z);
+		return true;
+	}
+	
+	static bool HandleTransmogCommand(ChatHandler* handler, char const* args)
+	{
+		if (!*args)
+			return false;
+		
+		// Space
+
+		char const* px = strtok((char*)args, " ");
+		char const* py = strtok(NULL, " ");
+		
+		if (!px || !py)
+			return false;
+
+		uint32 guid = uint32(atoi(px));
+		uint32 transmog = uint32(atoi(py));
+
+		handler->SendSysMessage("Item was succesfully transmogriffied. Time to disconnect/reconnect.");
+
+	//SQL
+
+		PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_ARTIFACT_TRANSMOG);
+		stmt->setUInt32(0, guid); // Guid
+		stmt->setUInt32(1, transmog); // ModifiedAppareancesID
+		CharacterDatabase.Execute(stmt);
+
 		return true;
 	}
 };
