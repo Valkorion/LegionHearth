@@ -187,7 +187,10 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_SEL_MATCH_MAKER_RATING, "SELECT matchMakerRating FROM character_arena_stats WHERE guid = ? AND slot = ?", CONNECTION_SYNCH);
     PrepareStatement(CHAR_SEL_CHARACTER_COUNT, "SELECT account, COUNT(guid) FROM characters WHERE account = ? GROUP BY account", CONNECTION_ASYNC);
     PrepareStatement(CHAR_UPD_NAME_BY_GUID, "UPDATE characters SET name = ? WHERE guid = ?", CONNECTION_ASYNC);
+	// Custom
 	PrepareStatement(CHAR_ARTIFACT_TRANSMOG, "INSERT INTO item_instance_transmog (itemGuid, itemModifiedAppearanceAllSpecs) VALUES (?, ?)", CONNECTION_ASYNC);
+	PrepareStatement(CHAR_UPD_ARTIFACT_TRANSMOG, "UPDATE item_instance_transmog SET itemModifiedAppearanceAllSpecs = ? WHERE itemGuid = ?", CONNECTION_ASYNC);
+
 
     // Guild handling
     // 0: uint32, 1: string, 2: uint32, 3: string, 4: string, 5: uint64, 6-10: uint32, 11: uint64

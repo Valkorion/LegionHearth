@@ -101,7 +101,7 @@ public:
             { "mailbox",          rbac::RBAC_PERM_COMMAND_MAILBOX,          false, &HandleMailBoxCommand,          "" },
             { "auras  ",          rbac::RBAC_PERM_COMMAND_LIST_AURAS,       false, &HandleAurasCommand,            "" },
 			{ "move",			  rbac::RBAC_PERM_COMMAND_AURA,				false, &HandleMoveCommand,			   "" },
-			{ "transmog",		  rbac::RBAC_PERM_COMMAND_AURA,				false, &HandleTransmogCommand,		   "" },
+			{ "artifact",		  rbac::RBAC_PERM_COMMAND_AURA,				false, &HandleTransmogCommand,		   "" },
         };
         return commandTable;
     }
@@ -1275,6 +1275,11 @@ public:
         }
 
         Item* item = playerTarget->StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId), GuidSet(), bonusListIDs);
+		
+		//	GetGuid
+		ObjectGuid::LowType guid = item->GetGUID().GetCounter();
+
+		handler->PSendSysMessage("itemGuid : %d", guid);
 
         // remove binding (let GM give it to another player later)
         if (player == playerTarget)
@@ -2790,7 +2795,6 @@ public:
 	{
 		if (!*args)
 			return false;
-		
 		// Space
 
 		char const* px = strtok((char*)args, " ");
@@ -2799,17 +2803,27 @@ public:
 		if (!px || !py)
 			return false;
 
-		uint32 guid = uint32(atoi(px));
+		uint64 guid = uint32(atoi(px));
 		uint32 transmog = uint32(atoi(py));
 
 		handler->SendSysMessage("Item was succesfully transmogriffied. Time to disconnect/reconnect.");
 
 	//SQL
-
-		PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_ARTIFACT_TRANSMOG);
-		stmt->setUInt32(0, guid); // Guid
-		stmt->setUInt32(1, transmog); // ModifiedAppareancesID
-		CharacterDatabase.Execute(stmt);
+		QueryResult guidSql = CharacterDatabase.PQuery("SELECT itemGuid FROM item_instance_transmog WHERE itemGuid = %u", guid);
+		if (!guidSql)
+		{
+			PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_ARTIFACT_TRANSMOG);
+			stmt->setUInt64(0, guid); // Guid
+			stmt->setUInt32(1, transmog); // ModifiedAppareancesID
+			CharacterDatabase.Execute(stmt);
+		}
+		else
+		{
+			PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ARTIFACT_TRANSMOG);
+			stmt->setUInt32(0, transmog); // ModifiedAppareancesID
+			stmt->setUInt64(1, guid); // Guid
+			CharacterDatabase.Execute(stmt);
+		}
 
 		return true;
 	}
