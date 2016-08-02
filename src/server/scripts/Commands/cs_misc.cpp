@@ -1243,6 +1243,14 @@ public:
 			transmogId = strtol(transmog, NULL, 10);
 
 		}
+		
+		char const* enchant = strtok(NULL, " ");
+		uint32 enchantId = 0;
+		if (enchant)
+		{
+			enchantId = strtol(enchant, NULL, 10);
+
+		}
 
         Player* player = handler->GetSession()->GetPlayer();
         Player* playerTarget = handler->getSelectedPlayer();
@@ -1283,7 +1291,7 @@ public:
             return false;
         }
 
-        Item* item = playerTarget->StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId), GuidSet(), bonusListIDs, false, transmogId);
+        Item* item = playerTarget->StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId), GuidSet(), bonusListIDs, false, transmogId, enchantId);
 		
 		//	GetGuid
 		ObjectGuid::LowType guid = item->GetGUID().GetCounter();
