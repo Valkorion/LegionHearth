@@ -101,7 +101,7 @@ public:
             { "mailbox",          rbac::RBAC_PERM_COMMAND_MAILBOX,          false, &HandleMailBoxCommand,          "" },
             { "auras  ",          rbac::RBAC_PERM_COMMAND_LIST_AURAS,       false, &HandleAurasCommand,            "" },
 			{ "move",			  rbac::RBAC_PERM_COMMAND_AURA,				false, &HandleMoveCommand,			   "" },
-			{ "artifact",		  rbac::RBAC_PERM_COMMAND_AURA,				false, &HandleTransmogCommand,		   "" },
+			{ "nuit",			  rbac::RBAC_PERM_COMMAND_AURA,				false, &HandleNightAuraCommand,		   "" },
         };
         return commandTable;
     }
@@ -2808,35 +2808,30 @@ public:
 		return true;
 	}
 	
-	static bool HandleTransmogCommand(ChatHandler* handler, char const* args)
+	static bool HandleNightAuraCommand(ChatHandler* handler, char const* args)
 	{
-		
-		char const* px = strtok((char*)args, " ");
-		char const* py = strtok(NULL, " ");
-		
-		if (!px || !py)
+		Unit* target = handler->getSelectedUnit();
+		if (!target)
+		{
+			handler->SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
+			handler->SetSentErrorMessage(true);
 			return false;
-
-		uint64 guid = uint32(atoi(px));
-		uint32 transmog = uint32(atoi(py));
-
-		handler->SendSysMessage("Item was succesfully transmogriffied. Time to disconnect/reconnect.");
-
-	//SQL
-		QueryResult guidSql = CharacterDatabase.PQuery("SELECT itemGuid FROM item_instance_transmog WHERE itemGuid = %u", guid);
-		if (!guidSql)
-		{
-			PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_ARTIFACT_TRANSMOG);
-			stmt->setUInt64(0, guid); // Guid
-			stmt->setUInt32(1, transmog); // ModifiedAppareancesID
-			CharacterDatabase.Execute(stmt);
 		}
-		else
+
+		uint32 spellId = 185394;
+
+		WorldPacket data;
+		if (strncmp(args, "on", 3) == 0)
+		if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
+
 		{
-			PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ARTIFACT_TRANSMOG);
-			stmt->setUInt32(0, transmog); // ModifiedAppareancesID
-			stmt->setUInt64(1, guid); // Guid
-			CharacterDatabase.Execute(stmt);
+			ObjectGuid castId = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, target->GetMapId(), spellId, target->GetMap()->GenerateLowGuid<HighGuid::Cast>());
+			Aura::TryRefreshStackOrCreate(spellInfo, castId, MAX_EFFECT_MASK, target, target);
+		}
+		else if (strncmp(args, "off", 4) == 0)
+
+		{
+			target->RemoveAura(185394);
 		}
 
 		return true;
